@@ -1,11 +1,7 @@
 
-$base_packages = [
-	"vim",
-	"screen",
-	"sudo",
-	"git",
-	"netcat",
-]
+include packages
+include user_config
+
 
 Exec {
     path => [
@@ -20,18 +16,53 @@ file { "/etc/apt/sources.list":
     target => "/vagrant/etc/sources.list",
 }->exec { "apt-get update": }
 
-Package { require => Exec["apt-get update"] }
+class packages {
+    $base_packages = [
+        "vim",
+        "screen",
+        "sudo",
+        "git",
+        "netcat",
+    ]
 
-package { $base_packages: ensure => installed }
-
-
-file { "/home/vagrant/.bashrc":
-    ensure => link,
-    target => "/vagrant/etc/bashrc",
-    owner => "vagrant",
+    Package { require => Exec["apt-get update"] }
+    package { $base_packages: ensure => installed }
 }
-file { "/home/vagrant/.vimrc":
-    ensure => link,
-    target => "/vagrant/etc/vimrc",
-    owner => "vagrant",
+
+class user_config {
+    
+    $user_name = "vagrant"
+    $HOME = "/home/${user_name}"
+
+    File { owner => $user_name }
+    Exec { environment => ["HOME=${HOME}"] }
+
+    #
+    # Shell configs
+    #
+    
+    file { "$HOME/.bashrc":
+        ensure => link,
+        target => "/vagrant/etc/bashrc",
+        owner => "vagrant",
+    }
+    file { "$HOME/.vimrc":
+        ensure => link,
+        target => "/vagrant/etc/vimrc",
+        owner => "vagrant",
+    }
+    
+    #
+    # Git config
+    #
+    
+    $author_options = [
+        "git config --global user.name 'Luke Williams'",
+        "git config --global user.email 'shmookey@shmookey.net'",
+    ]
+    
+    exec { $author_options:
+        require => Package["git"],
+    }
+
 }
