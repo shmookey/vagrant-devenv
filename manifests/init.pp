@@ -105,11 +105,8 @@ class user_config {
     # Git config
     #
     
-    $git_author_options = [
-        "git config --global user.name 'Luke Williams'",
-        "git config --global user.email 'shmookey@shmookey.net'",
-    ]
-    exec { $git_author_options:
-        creates => "$HOME/.gitconfig"
+    file { "$HOME/.gitconfig":
+        ensure => link,
+        target => "/vagrant/etc/gitconfig",
     }
 }
